@@ -37,15 +37,79 @@ document.addEventListener('DOMContentLoaded', () => {
         prizeMappingElement.appendChild(prizeCard);
     });
 
-    // 修改抽奖项，确保第二个奖项被选中
+    function typeWriter(text, element, callback) {
+        let i = 0;
+        const placeholder = '|';
+        function typing() {
+            if (i < text.length) {
+                element.innerHTML = text.substring(0, i + 1) + placeholder;
+                i++;
+                setTimeout(typing, 100);
+            } else {
+                element.innerHTML = text;
+                if (callback) callback();
+            }
+        }
+        typing();
+    }
+
+    function displayIntroductionLines() {
+        showContainer(introContainers[0], config.introMessages[0], () => {
+            showContainer(introContainers[1], config.introMessages[1], () => {
+                showContainer(introContainers[2], config.introMessages[2], () => {
+                    setTimeout(showAnimation, 2000);
+                });
+            });
+        });
+    }
+
+    function showContainer(container, text, callback) {
+        container.classList.add('active');
+        typeWriter(text, container.querySelector('p'), () => {
+            setTimeout(() => {
+                container.classList.remove('active');
+                container.style.display = 'none';
+                if (callback) callback();
+            }, 2000);
+        });
+    }
+
+    function showAnimation() {
+        animationContainer.style.display = 'flex';
+        createFallingEmojis(emojiList, 50);
+        animationContainer.classList.add('active');
+        setTimeout(showWheel, 2000);
+    }
+
+    function createFallingEmojis(emojis, count) {
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < count; i++) {
+            const emoji = document.createElement('div');
+            emoji.classList.add('falling-emojis');
+            emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.style.left = Math.random() * 100 + 'vw';
+            emoji.style.animationDuration = Math.random() * 2 + 3 + 's';
+            fragment.appendChild(emoji);
+        }
+        animationContainer.appendChild(fragment);
+    }
+
+    function showWheel() {
+        animationContainer.classList.remove('active');
+        setTimeout(() => {
+            animationContainer.style.display = 'none';
+            wheelContainer.style.display = 'flex';
+            wheelContainer.classList.add('active');
+        }, 1000);
+    }
+
     const prizes = Object.keys(prizeMapping);
-    const secondPrizeIndex = 1; // 第二个奖项索引为1（数组索引从0开始）
     const myLucky = new LuckyCanvas.LuckyWheel('#my-lucky', {
         width: 300,
         height: 300,
         blocks: [{ padding: '10px', background: '#617df2' }],
         prizes: prizes.map((prize, index) => ({
-            background: index === secondPrizeIndex ? '#ff0000' : (index % 2 === 0 ? '#e9e8fe' : '#b8c5f2'),
+            background: index % 2 === 0 ? '#e9e8fe' : '#b8c5f2',
             fonts: [{ text: prize }]
         })),
         buttons: [{ radius: '30%', background: '#869cfa', pointer: true }]
@@ -56,8 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = true;
         myLucky.play();
         setTimeout(() => {
-            myLucky.stop(secondPrizeIndex); // 确保抽中第二个奖项
-            showPrize(prizes[secondPrizeIndex]);
+            const prizeIndex = Math.floor(Math.random() * prizes.length);
+            myLucky.stop(prizeIndex);
+            showPrize(prizes[prizeIndex]);
         }, 3000);
     }
 
